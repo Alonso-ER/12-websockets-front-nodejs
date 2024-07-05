@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="./styles/style.css">
 </head>
 <body>
-    <h1>Websockets - Status</h1>
+    <h1>Websockets - <small>Status</small></h1>
 
     <form>
         <input type="text" placeholder="Enviar Mensaje"/>
@@ -19,18 +19,54 @@
     </ul>
 
      <script> 
+        let socket = null;
+        const form = document.querySelector('form');
+        const input = document.querySelector('input');
+        const messagesElem = document.querySelector('#messages');
+        const statusElem = document.querySelector('small')
+        
+        function sendMessage( message ){
+            socket?.send(message);
+        }
+        
+        function renderMessage(message){
+            const li = document.createElement('li');
+            li.innerHTML = message;
+            messages.prepend(li);
+        }
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const message = input.value;
+            sendMessage(message);
+            input.value = null;
+        });
+        
+        
+        function connectToServer(){
+            
+            socket = new WebSocket('ws://localhost:3000');
+            
+            socket.onopen = ( event ) => {
+                statusElem.innerText = 'Online';
+            }
+            
+            socket.onclose = ( event ) => {
+                statusElem.innerText = 'Offline';
+                setTimeout(() => {
+                    connectToServer();
+                }, 1500+(Math.random() * ( 10 - 5 )));
+            }
+
+            socket.onmessage = (event) => {
+                const { payload } = JSON.parse(event.data);
+                renderMessage(payload);
+            }
+
+        }
     
-        const socket = new WebSocket('ws://localhost:3000');
-
-        socket.onopen = ( event ) => {
-            console.log(event);
-            console.log('Connected')
-        }
-
-        socket.onclose = ( event ) => {
-            console.log(event);
-            console.log('Disconnected')
-        }
+        connectToServer();
+        
 
     </script>
 </body>
